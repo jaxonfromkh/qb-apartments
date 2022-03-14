@@ -13,14 +13,15 @@ local Translations = {
     text = {
         enter = 'Enter Apartment',
         ring_doorbell = 'Ring Doorbell',
-        logout = 'Logout Character',
-        change_outfit = 'Change Outfit',
-        open_stash = 'Open Stash',
+        logout = '[H] Logout Character',
+        change_outfit = '[G] Change Outfit',
+        open_stash = '[H] Open Stash',
         move_here = 'Move Here',
-        open_door = 'Open Door',
-        leave = 'Leave Apartment',
+        open_door = '[G] Open Door',
+        leave = '[H] Leave Apartment',
         close_menu = '⬅ Close Menu',
         tennants = 'Tennants',
+        enter_move = '[H] To Enter, [G] For More',
     },
 }
 

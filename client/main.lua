@@ -156,7 +156,7 @@ local function SetClosestApartment()
     end
 end
 
-function MenuOwners()
+local function MenuOwners()
     QBCore.Functions.TriggerCallback('apartments:GetAvailableApartments', function(apartments)
         if next(apartments) == nil then
             QBCore.Functions.Notify(Lang:t('error.nobody_home'), "error", 3500)
@@ -196,25 +196,8 @@ function MenuOwners()
     end, ClosestHouse)
 end
 
-
-
 function closeMenuFull()
     exports['qb-menu']:closeMenu()
-end
-
-local function DrawText3D(x, y, z, text)
-    SetTextScale(0.35, 0.35)
-    SetTextFont(4)
-    SetTextProportional(1)
-    SetTextColour(255, 255, 255, 215)
-    SetTextEntry("STRING")
-    SetTextCentre(true)
-    AddTextComponentString(text)
-    SetDrawOrigin(x,y,z, 0)
-    DrawText(0.0, 0.0)
-    local factor = (string.len(text)) / 370
-    DrawRect(0.0, 0.0+0.0125, 0.017+ factor, 0.03, 0, 0, 0, 75)
-    ClearDrawOrigin()
 end
 
 -- Events
@@ -310,32 +293,6 @@ RegisterNetEvent('apartments:client:UpdateApartment', function()
     IsOwned = true
 end)
 
-RegisterNetEvent('apartments:client:OpenDoor', function()
-    TriggerServerEvent("apartments:server:OpenDoor", CurrentDoorBell, CurrentApartment, ClosestHouse)
-    CurrentDoorBell = 0
-end)
-
-RegisterNetEvent('apartments:client:LeaveApartment', function()
-    LeaveApartment(ClosestHouse)
-end)
-
-RegisterNetEvent('apartments:client:OpenStash', function()
-    if CurrentApartment ~= nil then
-        TriggerServerEvent("inventory:server:OpenInventory", "stash", CurrentApartment)
-        TriggerServerEvent("InteractSound_SV:PlayOnSource", "StashOpen", 0.4)
-        TriggerEvent("inventory:client:SetCurrentStash", CurrentApartment)
-    end
-end)
-
-RegisterNetEvent('apartments:client:ChangeOutfit', function()
-    TriggerServerEvent("InteractSound_SV:PlayOnSource", "Clothes1", 0.4)
-    TriggerEvent('qb-clothing:client:openOutfitMenu')
-end)
-
-RegisterNetEvent('apartments:client:Logout', function()
-    TriggerServerEvent('qb-houses:server:LogoutLocation')
-end)
-
 -- Threads
 
 CreateThread(function()
@@ -349,7 +306,6 @@ end)
 
 CreateThread(function()
     local shownHeader = false
-
     while true do
         local sleep = 1000
         if LocalPlayer.state.isLoggedIn and ClosestHouse then
@@ -367,93 +323,64 @@ CreateThread(function()
                 if CurrentDoorBell ~= 0 then
                     if entrancedist <= 1 then
                         inRange = true
-                        headerMenu[#headerMenu+1] = {
-                            header = Lang:t('text.open_door'),
-                            params = {
-                                event = 'apartments:client:OpenDoor',
-                                args = {}
-                            }
-                        }
+                        headerMenu = Lang:t('text.open_door')
+                        if IsControlJustPressed(0, 47) then -- G
+                            TriggerServerEvent("apartments:server:OpenDoor", CurrentDoorBell, CurrentApartment, ClosestHouse)
+                            CurrentDoorBell = 0
+                        end
                     end
                 end
 
                 --Exit
                 if entrancedist <= 1 then
                     inRange = true
-                    headerMenu[#headerMenu+1] = {
-                        header = Lang:t('text.leave'),
-                        params = {
-                            event = 'apartments:client:LeaveApartment',
-                            args = {}
-                        }
-                    }
-                elseif entrancedist <= 3 then
-                    local x = Apartments.Locations[ClosestHouse].coords.enter.x - POIOffsets.exit.x
-                    local y = Apartments.Locations[ClosestHouse].coords.enter.y - POIOffsets.exit.y
-                    local z = Apartments.Locations[ClosestHouse].coords.enter.z - CurrentOffset + POIOffsets.exit.z
-                    DrawMarker(2, x, y, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, 0.2, 0.15, 200, 0, 0, 222, false, false, false, true, false, false, false)
+                    headerMenu = Lang:t('text.leave')
+                    if IsControlJustPressed(0, 74) then -- H
+                        LeaveApartment(ClosestHouse)
+                    end
                 end
 
 
                 --Stash
                 if stashdist <= 1.2 then
                     inRange = true
-                    headerMenu[#headerMenu+1] = {
-                        header = Lang:t('text.open_stash'),
-                        params = {
-                            event = 'apartments:client:OpenStash',
-                            args = {}
-                        }
-                    }
-                elseif stashdist <= 3 then
-                    local x = Apartments.Locations[ClosestHouse].coords.enter.x - POIOffsets.stash.x
-                    local y = Apartments.Locations[ClosestHouse].coords.enter.y - POIOffsets.stash.y
-                    local z = Apartments.Locations[ClosestHouse].coords.enter.z - CurrentOffset + POIOffsets.stash.z + 1.0
-                    DrawMarker(2, x, y, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, 0.2, 0.15, 200, 0, 0, 222, false, false, false, true, false, false, false)
+                    headerMenu = Lang:t('text.open_stash')
+                    if IsControlJustPressed(0, 74) then -- H
+                        if CurrentApartment ~= nil then
+                            TriggerServerEvent("inventory:server:OpenInventory", "stash", CurrentApartment)
+                            TriggerServerEvent("InteractSound_SV:PlayOnSource", "StashOpen", 0.4)
+                            TriggerEvent("inventory:client:SetCurrentStash", CurrentApartment)
+                        end
+                    end
                 end
 
                 --Outfits
                 if outfitsdist <= 1 then
                     inRange = true
-                    headerMenu[#headerMenu+1] = {
-                        header = Lang:t('text.change_outfit'),
-                        params = {
-                            event = 'apartments:client:ChangeOutfit',
-                            args = {}
-                        }
-                    }
-                elseif outfitsdist <= 3 then
-                    local x = Apartments.Locations[ClosestHouse].coords.enter.x - POIOffsets.clothes.x
-                    local y = Apartments.Locations[ClosestHouse].coords.enter.y - POIOffsets.clothes.y
-                    local z = Apartments.Locations[ClosestHouse].coords.enter.z - CurrentOffset + POIOffsets.clothes.z
-                    DrawMarker(2, x, y, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, 0.2, 0.15, 200, 0, 0, 222, false, false, false, true, false, false, false)
+                    headerMenu = Lang:t('text.change_outfit')
+                    if IsControlJustPressed(0, 47) then -- G
+                        TriggerServerEvent("InteractSound_SV:PlayOnSource", "Clothes1", 0.4)
+                        TriggerEvent('qb-clothing:client:openOutfitMenu')
+                    end
                 end
 
                 --Logout
                 if logoutdist <= 1 then
                     inRange = true
-                    headerMenu[#headerMenu+1] = {
-                        header = Lang:t('text.logout'),
-                        params = {
-                            event = 'apartments:client:Logout',
-                            args = {}
-                        }
-                    }
-                elseif logoutdist <= 3 then
-                    local x = Apartments.Locations[ClosestHouse].coords.enter.x - POIOffsets.logout.x
-                    local y = Apartments.Locations[ClosestHouse].coords.enter.y + POIOffsets.logout.y
-                    local z = Apartments.Locations[ClosestHouse].coords.enter.z - CurrentOffset + POIOffsets.logout.z
-                    DrawMarker(2, x, y, z, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.3, 0.2, 0.15, 200, 0, 0, 222, false, false, false, true, false, false, false)
+                    headerMenu = Lang:t('text.logout')
+                    if IsControlJustPressed(0, 74) then -- H
+                        TriggerServerEvent('qb-houses:server:LogoutLocation')
+                    end
                 end
 
                 if inRange and not shownHeader then
                     shownHeader = true
-                    exports['qb-menu']:showHeader(headerMenu)
+                    exports["qb-ui"]:showInteraction(headerMenu, 'info')
                 end
 
                 if not inRange and shownHeader then
                     shownHeader = false
-                    exports['qb-menu']:closeMenu()
+                    exports["qb-ui"]:hideInteraction()
                 end
 
             else
@@ -463,55 +390,89 @@ CreateThread(function()
                 local entrance = #(pos - vector3(Apartments.Locations[ClosestHouse].coords.enter.x, Apartments.Locations[ClosestHouse].coords.enter.y,Apartments.Locations[ClosestHouse].coords.enter.z))
 
                 if IsOwned then
-                   if entrance <= 1 then
+                    if entrance <= 1 then
                         inRange = true
-                        headerMenu[#headerMenu+1] = {
-                            header = Lang:t('text.enter'),
-                            params = {
-                                event = 'apartments:client:EnterApartment',
-                                args = {}
+                        headerMenu = Lang:t('text.enter_move')
+                        if IsControlJustPressed(0, 74) then --H
+                            TriggerEvent('apartments:client:EnterApartment')
+                        elseif IsControlJustPressed(0, 47) then -- G
+                            local MenuOwnApartment = {
+                                {
+                                    header = "Apartments Options",
+                                    isMenuHeader = true
+                                },
+                                {
+                                    header = Lang:t('text.enter'),
+                                    txt = "Enter Your Apartment",
+                                    params = {
+                                        event = 'apartments:client:EnterApartment',
+                                        args = {}
+                                    }
+                                },
+                                {
+                                    header = Lang:t('text.ring_doorbell'),
+                                    txt = "Ring Door Bell Online Players",
+                                    params = {
+                                        event = 'apartments:client:DoorbellMenu',
+                                        args = {}
+                                    }
+                                },
+                                {
+                                    header = Lang:t('text.close_menu'),
+                                    params = {
+                                        event = "qb-menu:closeMenu",
+                                    }
+                                }
                             }
-                        }
-
-                        headerMenu[#headerMenu+1] = {
-                            header = Lang:t('text.ring_doorbell'),
-                            params = {
-                                event = 'apartments:client:DoorbellMenu',
-                                args = {}
-                            }
-                        }
+                            exports['qb-menu']:openMenu(MenuOwnApartment)
+                        end
                     end
                 elseif not IsOwned then
                     if entrance <= 1 then
                         inRange = true
-                        headerMenu[#headerMenu+1] = {
-                            header = Lang:t('text.move_here'),
-                            params = {
-                                event = 'apartments:client:UpdateApartment',
-                                args = {}
+                        headerMenu = "[G] For More"
+                        if IsControlJustPressed(0, 47) then -- G
+                            local MenuNotOwnApartment = {
+                                {
+                                    header = "Apartments Options",
+                                    isMenuHeader = true
+                                },
+                                {
+                                    header = Lang:t('text.move_here'),
+                                    txt = "Change Apartment",
+                                    params = {
+                                        event = 'apartments:client:UpdateApartment',
+                                        args = {}
+                                    }
+                                },
+                                {
+                                    header = Lang:t('text.ring_doorbell'),
+                                    txt = "Ring Door Bell Online Players",
+                                    params = {
+                                        event = 'apartments:client:DoorbellMenu',
+                                        args = {}
+                                    }
+                                },
+                                {
+                                    header = Lang:t('text.close_menu'),
+                                    params = {
+                                        event = "qb-menu:closeMenu",
+                                    }
+                                }
                             }
-                        }
-
-
-                        headerMenu[#headerMenu+1] = {
-                            header = Lang:t('text.ring_doorbell'),
-                            params = {
-                                event = 'apartments:client:DoorbellMenu',
-                                args = {}
-                            }
-                        }
-
+                            exports['qb-menu']:openMenu(MenuNotOwnApartment)
+                        end
                     end
                 end
 
                 if inRange and not shownHeader then
                     shownHeader = true
-                    exports['qb-menu']:showHeader(headerMenu)
+                    exports["qb-ui"]:showInteraction(headerMenu, 'info')
                 end
-
+        
                 if not inRange and shownHeader then
                     shownHeader = false
-                    exports['qb-menu']:closeMenu()
+                    exports["qb-ui"]:hideInteraction()
                 end
             end
         end
