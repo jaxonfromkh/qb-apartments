@@ -1,5 +1,6 @@
 # qb-apartments
 Apartments System for QB-Core Framework :office:
+With qb-ui that i made!
 
 # License
 
@@ -27,6 +28,7 @@ Apartments System for QB-Core Framework :office:
 - [qb-interior](https://github.com/qbcore-framework/qb-interior) - Interior logic
 - [qb-weathersync](https://github.com/qbcore-framework/qb-weathersync) - To desync weather while inside
 - [qb-spawn](https://github.com/qbcore-framework/qb-spawn) - To spawn the player at apartment if last location was in apartment
+- [qb-ui](https://github.com/jaxonfromkh/qb-ui) - Nui Drawtext
 
 ## Screenshots
 ![Inside Apartment](https://i.imgur.com/mp3XL4Y.jpg)
